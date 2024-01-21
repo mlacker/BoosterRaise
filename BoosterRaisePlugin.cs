@@ -1,5 +1,6 @@
 ﻿using BepInEx;
 using BepInEx.Unity.IL2CPP;
+using HarmonyLib;
 
 namespace BoosterRaise;
 
@@ -14,5 +15,7 @@ public class BoosterRaisePlugin : BasePlugin
     {
         // Plugin startup logic
         Log.LogInfo($"Plugin {GUID} is loaded!");
+        
+        _ = Harmony.CreateAndPatchAll(typeof(BoosterRaisePatchs), GUID);
     }
 }
