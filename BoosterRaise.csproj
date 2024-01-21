@@ -1,22 +1,33 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
+		<Profile>dev</Profile>
+		<BepInEx>$(AppData)\r2modmanPlus-local\GTFO\profiles\$(Profile)\BepInEx</BepInEx>
+		<BuildDirectory>$(BepInEx)\plugins\$(AssemblyName)\</BuildDirectory>
+		<OutputPath>$(BuildDirectory)</OutputPath>
+
     <TargetFramework>net6.0</TargetFramework>
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <AssemblyName>BoosterRaise</AssemblyName>
-    <Description>Booster raise program</Description>
-    <Version>0.1.0</Version>
+    <RootNamespace>BoosterRaise</RootNamespace>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<Nullable>enable</Nullable>
+		<DebugType>None</DebugType>
     <LangVersion>latest</LangVersion>
+		<AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
     <RestoreAdditionalProjectSources>
       https://api.nuget.org/v3/index.json;
       https://nuget.bepinex.dev/v3/index.json;
-      https://nuget.samboy.dev/v3/index.json
     </RestoreAdditionalProjectSources>
-    <RootNamespace>BoosterRaise</RootNamespace>
   </PropertyGroup>
+
+	<Target Name="PostBuild" BeforeTargets="PostBuildEvent">
+		<Delete Files="$(OutputPath)\$(AssemblyName).deps.json" />
+	</Target>
 
   <ItemGroup>
     <PackageReference Include="BepInEx.Unity.IL2CPP" Version="6.0.0-be.*" IncludeAssets="compile" />
-    <PackageReference Include="BepInEx.PluginInfoProps" Version="2.*" />
+		<PackageReference Include="Samboy063.Cpp2IL.Core" Version="2022.1.0-pre-release.13" IncludeAssets="compile" />
+		<Reference Include="$(BepInEx)\interop\*.dll" Private="false" />
   </ItemGroup>
 </Project>
