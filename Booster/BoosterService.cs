@@ -39,6 +39,8 @@ public class BoosterService
             }
 
             PerfectBooster(item);
+
+            OverrideBooster(item);
         }
     }
 
@@ -64,6 +66,35 @@ public class BoosterService
         catch (Exception ex)
         {
             logger.LogError(ex, "Perfect Booster {} failed, {}", item.InstanceId, ex.Message);
+        }
+    }
+
+    private void OverrideBooster(BoosterImplantInventoryItem item)
+    {
+        try
+        {
+            var implant = item.Implant;
+            var template = templates[implant.TemplateId] ?? throw new InvalidOperationException("Template not found");
+
+            switch (template.Id)
+            {
+                case 37:
+                    implant.Effects = new List<BoosterImplant.Effect>()
+                    {
+                        new() { Id = 5, Value = 2.0f },
+                        new() { Id = 54, Value = 2.0f }
+                    }.ToArray();
+                    implant.Conditions = Array.Empty<uint>();
+                    break;
+                default:
+                    return;
+            }
+
+            logger.LogTrace($"Override Booster {item.InstanceId} {template.Name}({template.Id}) {(item.Prepared ? "prepared" : string.Empty)}, Effects: {template.Effects.Count}, Conditions: {template.Conditions.Count}");
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Override Booster {} failed, {}", item.InstanceId, ex.Message);
         }
     }
 }
