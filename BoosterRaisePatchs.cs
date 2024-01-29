@@ -1,4 +1,5 @@
 using BoosterImplants;
+using BoosterRaise.Booster;
 using BoosterRaise.Common.Logging;
 using GameData;
 using HarmonyLib;
@@ -9,6 +10,7 @@ namespace BoosterRaise;
 public static class BoosterRaisePatchs
 {
     private static readonly ILogger logger = LoggerFactory.CreateLogger(nameof(BoosterRaisePatchs));
+    private static readonly BoosterService service = new();
 
     [HarmonyPatch(typeof(DropServerManager), nameof(DropServerManager.NewGameSession))]
     [HarmonyPrefix]
@@ -37,5 +39,26 @@ public static class BoosterRaisePatchs
         logger.LogDebug($"Patch GetArtifactCount, skip execute and category {category} return {__result}");
 
         return false;
+    }
+
+    [HarmonyPatch(typeof(PersistentInventoryManager), nameof(PersistentInventoryManager.Setup))]
+    [HarmonyPostfix]
+    public static void OnPersistentInventorySetup(PersistentInventoryManager __instance)
+    {
+        logger.LogDebug("Patch postfix Setup of PersistentInventoryManager");
+
+        service.ReloadTemplates();
+
+        __instance.OnBoosterImplantInventoryChanged += (Action)(() =>
+        {
+            OnBoosterImplantInventoryChanged(__instance);
+        });
+    }
+
+    public static void OnBoosterImplantInventoryChanged(PersistentInventoryManager __instance)
+    {
+        logger.LogDebug("Patch OnBoosterImplantInventoryChanged");
+
+        service.OnBoosterImplantInventoryChanged(__instance.m_boosterImplantInventory);
     }
 }
