@@ -1,4 +1,6 @@
+using BoosterImplants;
 using BoosterRaise.Common.Logging;
+using GameData;
 using HarmonyLib;
 using Microsoft.Extensions.Logging;
 
@@ -22,6 +24,17 @@ public static class BoosterRaisePatchs
     public static bool ConsumeBoosters()
     {
         logger.LogDebug("Patch ConsumeBoosters, skip execute");
+
+        return false;
+    }
+
+    [HarmonyPatch(typeof(ArtifactInventory), nameof(ArtifactInventory.GetArtifactCount))]
+    [HarmonyPrefix]
+    public static bool GetArtifactCount(ref int __result, ArtifactCategory category)
+    {
+        __result = 200;
+
+        logger.LogDebug($"Patch GetArtifactCount, skip execute and category {category} return {__result}");
 
         return false;
     }
