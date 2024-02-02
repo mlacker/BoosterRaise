@@ -1,5 +1,6 @@
 using BoosterRaise.Common.Logging;
 using GameData;
+using HarmonyLib;
 using Microsoft.Extensions.Logging;
 
 namespace BoosterRaise.Booster;
@@ -76,19 +77,29 @@ public class BoosterService
             var implant = item.Implant;
             var template = templates[implant.TemplateId] ?? throw new InvalidOperationException("Template not found");
 
-            switch (template.Id)
+            List<BoosterImplant.Effect> effects = template.Id switch
             {
-                case 37:
-                    implant.Effects = new List<BoosterImplant.Effect>()
-                    {
-                        new() { Id = 5, Value = 2.0f },
-                        new() { Id = 54, Value = 2.0f }
-                    }.ToArray();
-                    implant.Conditions = Array.Empty<uint>();
-                    break;
-                default:
-                    return;
+                21 => new() {
+                    new() { Id = 41, Value = 1.6f }
+                },
+                37 => new() {
+                    new() { Id = 5, Value = 2.0f },
+                    new() { Id = 54, Value = 2.0f }
+                },
+                42 => new() {
+                    new() { Id = 10, Value = 1.55f },
+                    new() { Id = 11, Value = 1.55f }
+                },
+                _ => new(),
+            };
+
+            // ignored
+            if (effects.Count == 0) {
+                return;
             }
+
+            implant.Effects = effects.ToArray();
+            implant.Conditions = Array.Empty<uint>();
 
             logger.LogTrace($"Override Booster {item.InstanceId} {template.Name}({template.Id}) {(item.Prepared ? "prepared" : string.Empty)}, Effects: {template.Effects.Count}, Conditions: {template.Conditions.Count}");
         }
