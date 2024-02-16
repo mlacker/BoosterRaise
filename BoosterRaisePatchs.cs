@@ -1,5 +1,6 @@
 using BoosterImplants;
 using BoosterRaise.Booster;
+using BoosterRaise.Command;
 using BoosterRaise.Common.Logging;
 using GameData;
 using HarmonyLib;
@@ -10,7 +11,8 @@ namespace BoosterRaise;
 public static class BoosterRaisePatchs
 {
     private static readonly ILogger logger = LoggerFactory.CreateLogger(nameof(BoosterRaisePatchs));
-    private static readonly BoosterService service = new();
+    private static readonly BoosterService boosterService = new();
+    private static readonly CommandService commandService = new();
 
     [HarmonyPatch(typeof(DropServerManager), nameof(DropServerManager.NewGameSession))]
     [HarmonyPrefix]
@@ -45,9 +47,9 @@ public static class BoosterRaisePatchs
     [HarmonyPostfix]
     public static void OnPersistentInventorySetup(PersistentInventoryManager __instance)
     {
-        logger.LogDebug("Patch postfix Setup of PersistentInventoryManager");
+        logger.LogDebug("Patch OnSetup of PersistentInventoryManager");
 
-        service.ReloadTemplates();
+        boosterService.ReloadTemplates();
 
         __instance.OnBoosterImplantInventoryChanged += (Action)(() =>
         {
@@ -59,6 +61,24 @@ public static class BoosterRaisePatchs
     {
         logger.LogDebug("Patch OnBoosterImplantInventoryChanged");
 
-        service.OnBoosterImplantInventoryChanged(__instance.m_boosterImplantInventory);
+        boosterService.OnBoosterImplantInventoryChanged(__instance.m_boosterImplantInventory);
+    }
+
+    [HarmonyPatch(typeof(PersistentInventoryManager), nameof(PersistentInventoryManager.PrepareBoosterImplantForInjection))]
+    [HarmonyPrefix]
+    public static void OnActiveBoosterImplantsChanged(uint instanceId)
+    {
+        logger.LogDebug("Patch OnActiveBoosterImplantsChanged, InstanceId: {}", instanceId);
+    }
+
+    [HarmonyPatch(typeof(PlayerChatManager), nameof(PlayerChatManager.PostMessage))]
+    [HarmonyPostfix]
+    public static void OnPostMessage(PlayerChatManager __instance)
+    {
+        var message = __instance.m_lastValue;
+
+        logger.LogDebug($"Patch OnPostMessage, message: {message}");
+
+        commandService.Dispatch(message);
     }
 }
