@@ -1,6 +1,5 @@
 using BoosterRaise.Common.Logging;
 using GameData;
-using HarmonyLib;
 using Microsoft.Extensions.Logging;
 
 namespace BoosterRaise.Booster;
@@ -9,6 +8,8 @@ public class BoosterService
 {
     private readonly ILogger logger = LoggerFactory.CreateLogger<BoosterService>();
     private readonly Dictionary<uint, BoosterTemplate> templates = new();
+    private readonly HashSet<uint> preparedInstances = new();
+    private readonly HashSet<uint> overriedInstances = new();
 
     public void ReloadTemplates()
     {
@@ -52,8 +53,6 @@ public class BoosterService
             var implant = item.Implant;
             var template = templates[implant.TemplateId] ?? throw new InvalidOperationException("Template not found");
 
-            logger.LogTrace($"Perfect Booster {item.InstanceId} {template.Name}({template.Id}), Effects: {template.Effects.Count}");
-
             implant.Effects = implant.Effects.Select(original =>
             {
                 var effect = template.Effects.Single(it => original.Id == it.Id);
@@ -63,6 +62,11 @@ public class BoosterService
                     Value = effect.MaxValue
                 };
             }).ToArray();
+
+            if (preparedInstances.Add(item.InstanceId))
+            {
+                logger.LogTrace($"Perfect Booster {item.InstanceId} {template.Name}({template.Id}), Effects: {template.Effects.Count}");
+            }
         }
         catch (Exception ex)
         {
@@ -94,14 +98,18 @@ public class BoosterService
             };
 
             // ignored
-            if (effects.Count == 0) {
+            if (effects.Count == 0)
+            {
                 return;
             }
 
             implant.Effects = effects.ToArray();
             implant.Conditions = Array.Empty<uint>();
 
-            logger.LogTrace($"Override Booster {item.InstanceId} {template.Name}({template.Id}) {(item.Prepared ? "prepared" : string.Empty)}, Effects: {template.Effects.Count}, Conditions: {template.Conditions.Count}");
+            if (overriedInstances.Add(item.InstanceId))
+            {
+                logger.LogTrace($"Override Booster {item.InstanceId} {template.Name}({template.Id}) {(item.Prepared ? "prepared" : string.Empty)}, Effects: {template.Effects.Count}, Conditions: {template.Conditions.Count}");
+            }
         }
         catch (Exception ex)
         {
